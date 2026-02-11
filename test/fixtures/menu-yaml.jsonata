@@ -1,0 +1,9 @@
+/**
+ * @config {
+ *   "input": "menu.json",
+ *   "output": "output/menu.yaml"
+ * }
+ */
+categories {
+  name: items
+}

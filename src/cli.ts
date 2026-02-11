@@ -196,7 +196,35 @@ yargs(hideBin(process.argv))
             const dir = path.dirname(outputPath);
             if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
-            fs.writeFileSync(outputPath, JSON.stringify(finalResult, null, 2));
+            // Determine output format based on file extension
+            const ext = path.extname(outputPath).toLowerCase();
+            let outputContent: string;
+
+            if (ext === '.yaml' || ext === '.yml') {
+                outputContent = yaml.dump(finalResult, { indent: 2, lineWidth: -1 });
+                console.log(`Writing YAML output to ${outputPath}...`);
+            } else if (ext === '.json') {
+                outputContent = JSON.stringify(finalResult, null, 2);
+                console.log(`Writing JSON output to ${outputPath}...`);
+            } else {
+                // For other extensions (e.g., .css, .txt, .js), output as string
+                // If the result is already a string, use it directly
+                // If it's an array of strings, join them
+                // Otherwise, convert to string representation
+                if (typeof finalResult === 'string') {
+                    outputContent = finalResult;
+                } else if (Array.isArray(finalResult) && finalResult.every(item => typeof item === 'string')) {
+                    outputContent = finalResult.join('');
+                } else if (typeof finalResult === 'number' || typeof finalResult === 'boolean') {
+                    outputContent = String(finalResult);
+                } else {
+                    // For complex objects, still use JSON
+                    outputContent = JSON.stringify(finalResult, null, 2);
+                }
+                console.log(`Writing string output to ${outputPath}...`);
+            }
+
+            fs.writeFileSync(outputPath, outputContent);
             console.log(`Transformed ${config.input} -> ${config.output}`);
         } catch (e: any) {
             console.error(e.message);
