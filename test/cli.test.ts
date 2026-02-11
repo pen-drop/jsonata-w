@@ -83,5 +83,33 @@ categories {
             const output = execSync(`node ${CLI_PATH} transform ${SUBSET_JSONATA}`).toString();
             expect(output).toContain('Example validation passed');
         });
+
+        it('should output YAML format for .yaml extension', () => {
+            const YAML_JSONATA = path.resolve(__dirname, 'fixtures/menu-yaml.jsonata');
+            const YAML_OUTPUT = path.resolve(OUTPUT_DIR, 'menu.yaml');
+
+            const output = execSync(`node ${CLI_PATH} transform ${YAML_JSONATA}`).toString();
+            expect(output).toContain('Writing YAML output');
+            expect(output).toContain('Transformed menu.json -> output/menu.yaml');
+
+            const yamlContent = fs.readFileSync(YAML_OUTPUT, 'utf-8');
+            expect(yamlContent).toContain('Fruit:');
+            expect(yamlContent).toContain('- Apple');
+            expect(yamlContent).toContain('- Banana');
+        });
+
+        it('should output string format for non-JSON/YAML extensions', () => {
+            const STRING_JSONATA = path.resolve(__dirname, 'fixtures/menu-string.jsonata');
+            const CSS_OUTPUT = path.resolve(OUTPUT_DIR, 'menu.css');
+
+            const output = execSync(`node ${CLI_PATH} transform ${STRING_JSONATA}`).toString();
+            expect(output).toContain('Writing string output');
+            expect(output).toContain('Transformed menu.json -> output/menu.css');
+
+            const cssContent = fs.readFileSync(CSS_OUTPUT, 'utf-8');
+            expect(cssContent).toContain('/* Generated CSS */');
+            expect(cssContent).toContain('.Fruit { color: blue; }');
+            expect(cssContent).toContain('.Vegetables { color: blue; }');
+        });
     });
 });

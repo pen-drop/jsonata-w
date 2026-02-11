@@ -1,0 +1,11 @@
+/**
+ * @config {
+ *   "input": "menu.json",
+ *   "output": "output/menu.css"
+ * }
+ */
+"/* Generated CSS */\n" & $join(
+  categories.(
+    "." & name & " { color: blue; }\n"
+  ), ""
+)
