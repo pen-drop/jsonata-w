@@ -20,6 +20,21 @@
   },
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pen-drop/jsonata-w.git"
+  },
+  "bugs": {
+    "url": "https://github.com/pen-drop/jsonata-w/issues"
+  },
+  "homepage": "https://github.com/pen-drop/jsonata-w#readme",
+  "keywords": [
+    "jsonata",
+    "json",
+    "yaml",
+    "transform",
+    "cli"
+  ],
   "dependencies": {
     "@types/jsonpath": "^0.2.4",
     "ajv": "^8.17.1",
