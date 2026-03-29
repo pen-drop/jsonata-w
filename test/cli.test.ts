@@ -89,7 +89,6 @@ categories {
             const YAML_OUTPUT = path.resolve(OUTPUT_DIR, 'menu.yaml');
 
             const output = execSync(`node ${CLI_PATH} transform ${YAML_JSONATA}`).toString();
-            expect(output).toContain('Writing YAML output');
             expect(output).toContain('Transformed menu.json -> output/menu.yaml');
 
             const yamlContent = fs.readFileSync(YAML_OUTPUT, 'utf-8');
@@ -98,12 +97,45 @@ categories {
             expect(yamlContent).toContain('- Banana');
         });
 
+        it('should execute without writing when --dry-run is used', () => {
+            const OUTPUT_FILE = path.resolve(OUTPUT_DIR, 'menu.dryrun.json');
+
+            // Create a jsonata file that would write to a new output
+            const DRY_RUN_JSONATA = path.resolve(__dirname, 'fixtures/menu-dryrun.jsonata');
+            fs.writeFileSync(DRY_RUN_JSONATA, `
+/**
+ * @config {
+ *   "input": "menu.json",
+ *   "output": "output/menu.dryrun.json"
+ * }
+ */
+categories {
+  name: items
+}
+            `);
+
+            // Ensure output doesn't exist
+            if (fs.existsSync(OUTPUT_FILE)) fs.unlinkSync(OUTPUT_FILE);
+
+            const output = execSync(`node ${CLI_PATH} transform ${DRY_RUN_JSONATA} --dry-run`).toString();
+
+            // Should contain transformed output on stdout
+            expect(output).toContain('Fruit');
+            expect(output).toContain('Apple');
+
+            // Should NOT write the file
+            expect(fs.existsSync(OUTPUT_FILE)).toBe(false);
+
+            // Should NOT contain progress messages
+            expect(output).not.toContain('Loading input');
+            expect(output).not.toContain('Transformed');
+        });
+
         it('should output string format for non-JSON/YAML extensions', () => {
             const STRING_JSONATA = path.resolve(__dirname, 'fixtures/menu-string.jsonata');
             const CSS_OUTPUT = path.resolve(OUTPUT_DIR, 'menu.css');
 
             const output = execSync(`node ${CLI_PATH} transform ${STRING_JSONATA}`).toString();
-            expect(output).toContain('Writing string output');
             expect(output).toContain('Transformed menu.json -> output/menu.css');
 
             const cssContent = fs.readFileSync(CSS_OUTPUT, 'utf-8');

@@ -1,0 +1,11 @@
+
+/**
+ * @config {
+ *   "input": "menu.json",
+ *   "output": "output/menu.dryrun.json"
+ * }
+ */
+categories {
+  name: items
+}
+            

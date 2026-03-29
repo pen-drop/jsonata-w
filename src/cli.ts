@@ -103,7 +103,8 @@ yargs(hideBin(process.argv))
     })
     .command('transform <file>', 'Transform JSON using a single JSONata file with embedded @config', (yargs) => {
         return yargs
-            .positional('file', { describe: 'JSONata file with embedded @config', type: 'string', demandOption: true });
+            .positional('file', { describe: 'JSONata file with embedded @config', type: 'string', demandOption: true })
+            .option('dry-run', { type: 'boolean', default: false, describe: 'Execute and validate without writing output to disk' });
     }, async (argv) => {
         try {
             const filePath = path.resolve(argv.file);
@@ -120,14 +121,13 @@ yargs(hideBin(process.argv))
             const inputPath = resolvePath(config.input);
             const outputPath = resolvePath(config.output);
 
-            console.log(`Loading input from ${inputPath}...`);
+            if (!argv['dry-run']) console.log(`Loading input from ${inputPath}...`);
             const json = loader.load(inputPath);
 
-            console.log(`Executing transformation...`);
-            // Use evaluate since we already have the content
+            if (!argv['dry-run']) console.log(`Executing transformation...`);
             const result = await transformer.evaluate(json, fileContent);
 
-            console.log(`Unflattening result...`);
+            if (!argv['dry-run']) console.log(`Unflattening result...`);
             const finalResult = unflatten(result);
 
             if (config.schema) {
@@ -193,24 +193,16 @@ yargs(hideBin(process.argv))
                 }
             }
 
-            const dir = path.dirname(outputPath);
-            if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-
             // Determine output format based on file extension
             const ext = path.extname(outputPath).toLowerCase();
             let outputContent: string;
 
             if (ext === '.yaml' || ext === '.yml') {
                 outputContent = yaml.dump(finalResult, { indent: 2, lineWidth: -1 });
-                console.log(`Writing YAML output to ${outputPath}...`);
             } else if (ext === '.json') {
                 outputContent = JSON.stringify(finalResult, null, 2);
-                console.log(`Writing JSON output to ${outputPath}...`);
             } else {
                 // For other extensions (e.g., .css, .txt, .js), output as string
-                // If the result is already a string, use it directly
-                // If it's an array of strings, join them
-                // Otherwise, convert to string representation
                 if (typeof finalResult === 'string') {
                     outputContent = finalResult;
                 } else if (Array.isArray(finalResult) && finalResult.every(item => typeof item === 'string')) {
@@ -218,14 +210,18 @@ yargs(hideBin(process.argv))
                 } else if (typeof finalResult === 'number' || typeof finalResult === 'boolean') {
                     outputContent = String(finalResult);
                 } else {
-                    // For complex objects, still use JSON
                     outputContent = JSON.stringify(finalResult, null, 2);
                 }
-                console.log(`Writing string output to ${outputPath}...`);
             }
 
-            fs.writeFileSync(outputPath, outputContent);
-            console.log(`Transformed ${config.input} -> ${config.output}`);
+            if (argv['dry-run']) {
+                process.stdout.write(outputContent);
+            } else {
+                const dir = path.dirname(outputPath);
+                if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+                fs.writeFileSync(outputPath, outputContent);
+                console.log(`Transformed ${config.input} -> ${config.output}`);
+            }
         } catch (e: any) {
             console.error(e.message);
             process.exit(1);
