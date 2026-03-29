@@ -1,4 +1,5 @@
 import fs from 'fs';
+import yaml from 'js-yaml';
 
 export class SourceLoader {
     private cache: Map<string, any> = new Map();
@@ -11,12 +12,14 @@ export class SourceLoader {
             throw new Error(`File not found: ${path}`);
         }
         const content = fs.readFileSync(path, 'utf-8');
+        const isYaml = path.endsWith('.yml') || path.endsWith('.yaml');
         try {
-            const json = JSON.parse(content);
-            this.cache.set(path, json);
-            return json;
+            const data = isYaml ? yaml.load(content) : JSON.parse(content);
+            this.cache.set(path, data);
+            return data;
         } catch (_e) {
-            throw new Error(`Invalid JSON in file: ${path}`);
+            const format = isYaml ? 'YAML' : 'JSON';
+            throw new Error(`Invalid ${format} in file: ${path}`);
         }
     }
 
